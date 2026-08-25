@@ -1,0 +1,7 @@
+node_modules/
+.announce-keys.json
+interop-live.mjs
+local-relay-test.mjs
+e2e-identity.mjs
+verify-announce.mjs
+announce.mjs

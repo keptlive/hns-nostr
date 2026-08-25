@@ -1,0 +1,26 @@
+{
+  "name": "hns-nostr",
+  "version": "0.1.0",
+  "description": "Standalone, open-source HNS -> Nostr resolver. Verifies a Handshake name's Nostr identity with LOCAL SPV chain proof + DNSSEC, then the native Nostr key signature. Works for any Handshake TLD. Embeddable library + CLI.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "bin": {
+    "hns-nostr": "bin/hns-nostr.js"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "cli": "node bin/hns-nostr.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.9.2",
+    "@noble/hashes": "^2.3.0"
+  },
+  "license": "MIT",
+  "author": "HNS.ONE"
+}
