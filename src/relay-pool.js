@@ -135,7 +135,13 @@ export class RelayPool {
       // separates "refused" from "too slow" from "wants AUTH", which are
       // three different things to do about it.
       relays: results.map((r) => ({
-        relay: r.relay, reached: r.reached, status: r.status, events: r.list.length
+        relay: r.relay,
+        reached: r.reached,
+        status: r.status,
+        // What this relay sent, duplicates included — see `delivered` in
+        // `_fromOne`. `r.list.length` is post-dedup and would credit every
+        // copy of a note to whichever relay happened to answer first.
+        events: r.list.delivered ?? r.list.length
       }))
     }
   }
@@ -240,13 +246,19 @@ export class RelayPool {
       // follow list, and mislabelling it there refuses legitimate writes.
       events.reached = false
       events.status = 'failed'
+      // How many matching events THIS relay sent us, duplicates included.
+      // `events` itself only holds the copies this query had not seen yet, so
+      // it under-counts every relay but the first to deliver a given note —
+      // and a relay that answered with nothing but duplicates would look
+      // unreachable. `delivered` is what "did this relay have it" is read off.
+      events.delivered = 0
       const subId = 'hns' + Math.random().toString(36).slice(2, 10)
       let done = false
       const finish = (status) => {
         if (done) return
         done = true
         if (status) events.status = status
-        events.reached = events.status === 'eose' || events.length > 0
+        events.reached = events.status === 'eose' || events.delivered > 0
         clearTimeout(timer)
         try { ws && ws.close() } catch {}
         resolve(events)
@@ -273,13 +285,17 @@ export class RelayPool {
           // Dedup BEFORE verifying: the same note arrives from every relay
           // that has it, and a schnorr check per copy is the bulk of the work
           // in a feed load.
-          if (!seen || !seen.has(ev.id)) {
-            if (verifyEvent(ev).ok) {
-              events.push(ev)
-              if (seen) seen.add(ev.id)
-            }
+          if (seen && seen.has(ev.id)) {
+            events.delivered++
+          } else if (verifyEvent(ev).ok) {
+            events.push(ev)
+            events.delivered++
+            if (seen) seen.add(ev.id)
           }
-          if (events.length >= this.maxEvents) finish('eose')
+          // Cap on what the relay SENT, not on what survived dedup: a relay
+          // replaying a page we already have would otherwise never reach the
+          // cap and would stream until the timeout.
+          if (events.delivered >= this.maxEvents) finish('eose')
         } else if (data[0] === 'EOSE' && data[1] === subId) {
           finish('eose')
         } else if (data[0] === 'CLOSED' && data[1] === subId) {

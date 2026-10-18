@@ -51,10 +51,6 @@ export function computeEventId (event) {
 }
 
 /**
- * Full structural + cryptographic check of a Nostr event.
- * @returns {{ok:boolean, reason?:string}}
- */
-/**
  * Sign an unsigned event in place-ish, returning the complete NIP-01 object.
  *
  * Deliberately produces an ORDINARY event: no HNS kind, no HNS-only tag, no
@@ -160,6 +156,10 @@ export function replyTags (parent, { rootId, rootRelay } = {}) {
   return tags
 }
 
+/**
+ * Full structural + cryptographic check of a Nostr event.
+ * @returns {{ok:boolean, reason?:string}}
+ */
 export function verifyEvent (event) {
   if (!event || typeof event !== 'object') return { ok: false, reason: 'not an object' }
   if (typeof event.pubkey !== 'string' || !HEX64.test(event.pubkey)) {
