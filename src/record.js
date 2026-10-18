@@ -3,7 +3,7 @@
  * NOT an existing NIP:
  *
  *   _nostr.alice.exist TXT
- *   "v=nostr1;pubkey=<64-hex>;epoch=7;relay=wss://relay.hns.one"
+ *   "v=nostr1;pubkey=<64-hex>;epoch=7;relay=wss://social.hns.one"
  *
  * Extra relay URLs go in additional TXT strings (their own `relay=...`, or a
  * bare wss URL). A single logical record MAY be split across several TXT

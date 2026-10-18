@@ -3,7 +3,7 @@
  *
  *   GET https://<domain>/.well-known/nostr.json?name=<local>
  *   { "names": { "<local>": "<64-hex>" },
- *     "relays": { "<64-hex>": ["wss://relay.hns.one", ...] } }
+ *     "relays": { "<64-hex>": ["wss://social.hns.one", ...] } }
  *
  * Rules enforced here (from the spec):
  *   - lowercase hex keys, never npub

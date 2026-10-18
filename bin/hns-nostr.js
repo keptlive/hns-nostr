@@ -4,7 +4,7 @@
  *
  *   hns-nostr resolve alice.exist
  *   hns-nostr resolve alice@hns.one --json
- *   hns-nostr resolve npub1... --relay wss://relay.hns.one
+ *   hns-nostr resolve npub1... --relay wss://social.hns.one
  *   hns-nostr encode <64-hex>                 # -> npub / nprofile
  *   hns-nostr classify <input>                # show how an input is parsed
  *

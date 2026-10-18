@@ -1,19 +1,16 @@
 # HNS ↔ Nostr resolver & dual-publication — design
 
-> **STATUS NOTE, 2026-08-21.** This document is the ORIGINAL design. Where it
-> differs from what shipped, `~/hns/NOSTR-STATUS.md` wins.
+> **Status.** This is the original design. Where hns.one's deployment differs:
 >
-> The one difference that will bite you: this file uses `alice@hns.one`
-> throughout as the "conventional NIP-05" form (§1, §3, §4, §6, §8). **That
-> endpoint does not exist.** `hns.one/.well-known/nostr.json` is not served,
-> and the gateway answers only the `_` local part at the name's own host. The
-> shipped identity is `_@alice.<tld>.hns.one`, which ordinary clients display
-> as the bare `alice.<tld>.hns.one`.
->
-> Copying §3's example `kind:0` verbatim produces a profile whose `nip05`
-> fails verification silently in every client. Use `_@<name>.hns.one`.
+> - This file uses `alice@hns.one` as the conventional NIP-05 form (§1, §3,
+>   §4, §6, §8). hns.one does not serve it: `hns.one/.well-known/nostr.json`
+>   is not a NIP-05 endpoint. hns.one answers only the `_` local part at the
+>   name's own host, so the identity is `_@alice.<tld>.hns.one`, which ordinary
+>   clients display as `alice.<tld>.hns.one`. A profile copied from §3 would
+>   carry a `nip05` that fails verification. Use `_@<name>.hns.one`.
+> - The hns.one relay is `wss://social.hns.one`.
+> - The proof service in §5 is not deployed.
 
-Source: Matt's spec, 2026-08-18. This is the reference every Nostr task reads.
 The decision is NOT "put a Nostr key in HNS." It is: **ship an open, HNS-aware
 Nostr resolver, while dual-publishing everything through conventional Nostr
 standards so users stay compatible with existing clients.** The legacy identity
@@ -41,7 +38,7 @@ as `alice.exist`; ordinary clients simply lack HNS resolution.
 
 ```
 _nostr.alice.exist TXT
-"v=nostr1;pubkey=<64-hex>;epoch=7;relay=wss://relay.hns.one"
+"v=nostr1;pubkey=<64-hex>;epoch=7;relay=wss://social.hns.one"
 ```
 Extra relay URLs go in additional TXT strings. The resolver MUST verify, in
 order: (1) the Handshake root result via embedded SPV; (2) the `.exist`
@@ -80,7 +77,7 @@ Three states the resolver distinguishes:
 `GET https://hns.one/.well-known/nostr.json?name=alice`
 ```json
 {"names":{"alice":"<64-hex-lowercase>"},
- "relays":{"<64-hex-lowercase>":["wss://relay.hns.one","wss://second-independent.example"]}}
+ "relays":{"<64-hex-lowercase>":["wss://social.hns.one","wss://second-independent.example"]}}
 ```
 Requirements (from the NIP-05 spec): lowercase hex keys (never npub); include
 the `relays` map; `Access-Control-Allow-Origin: *`; **never redirect** the
@@ -94,7 +91,7 @@ never a separate hand-edited DB.
    returning:
    ```json
    {"pubkeyHex":"…","npub":"npub1…","nprofile":"nprofile1…",
-    "hnsName":"alice.exist","nip05":"alice@hns.one","relays":["wss://relay.hns.one"],
+    "hnsName":"alice.exist","nip05":"alice@hns.one","relays":["wss://social.hns.one"],
     "epoch":7,
     "proofs":{"hns":true,"dnssec":true,"nostrAcknowledgement":true,"nip05":true}}
    ```
@@ -125,7 +122,7 @@ HNS control.
 
 ## 7. Dual publication to normal Nostr
 
-Every post is an ordinary signed Nostr event, published to `wss://relay.hns.one`
+Every post is an ordinary signed Nostr event, published to `wss://social.hns.one`
 + the author's other NIP-65 write relays + mentioned recipients' read relays
 when appropriate. Publish the author's `kind:10002` relay list to the same set
 (NIP-65 recommends ~2–4 relays). HNS-aware resolution changes none of the event
@@ -152,7 +149,7 @@ publish a DM in both formats (duplicates + weakens NIP-17 gift-wrap metadata
 protection). Legacy NIP-04 send requires an explicit warning and only when the
 recipient can't receive NIP-17.
 
-## 9. Transfers & caching (ties to LAW L4 epochs)
+## 9. Transfers and caching (ownership epochs)
 
 On `alice.exist` ownership change: increment the epoch; immediately remove the
 HNS→Nostr binding; remove `alice` from the NIP-05 response; invalidate resolver
