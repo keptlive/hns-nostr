@@ -24,7 +24,9 @@ cd hns-nostr && npm ci && npm test
 
 Pass `hnsSrcPath` to `createResolver()` to load those modules from elsewhere.
 With `--spv-url`, the resolver uses an hsd SPV node you already run; otherwise
-it uses one on the default port or starts one.
+it uses one on the default port or starts one. Nothing is loaded or started
+until a lookup needs Handshake data, so resolving an `npub` or a NIP-05
+address starts it only when the key's profile claims a Handshake name.
 
 ## Command line
 
@@ -54,7 +56,7 @@ import { createResolver } from 'hns-nostr'
 
 const resolver = await createResolver()
 const proof = await resolver.resolve('npub1...')
-await resolver.close()   // stops the SPV node if it started one
+await resolver.close()   // stops the SPV node if a lookup started one
 ```
 
 To embed it without the default backend, construct `NostrResolver` with an

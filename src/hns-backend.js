@@ -13,9 +13,11 @@
  *   3. read _nostr.<name> TXT at the zone's authoritative nameserver
  *   4. DNSSEC-validate that TXT up to the on-chain DS anchor
  *
- * Those modules are imported dynamically so merely importing hns-nostr (or
- * embedding it with a caller-supplied backend / mock) never requires hsd or
- * wildroot-web3-resolution to be present.
+ * Nothing is loaded or started until the first Handshake lookup: the modules
+ * are imported, and the SPV node started, on the first verify(). Importing
+ * hns-nostr, embedding it with a caller-supplied backend, or resolving an npub
+ * or NIP-05 address whose profile claims no Handshake name never needs hsd or
+ * wildroot-web3-resolution and never spawns a node.
  */
 
 import dns from 'node:dns/promises'
@@ -49,13 +51,25 @@ export async function createHnsBackend (options = {}) {
   // directory holding spv.js, dns-query.js and dnssec.js.
   const hnsDir = options.hnsSrcPath || options.browserHnsPath || DEFAULT_HNS_SRC
   const toUrl = (f) => new URL('file://' + path.join(hnsDir, f)).href
-  const { SPVNode } = await import(toUrl('spv.js'))
-  const { query, TYPES } = await import(toUrl('dns-query.js'))
-  const { validateChain } = await import(toUrl('dnssec.js'))
-
-  const spv = options.spv || new SPVNode(options.spvOptions || {})
-  const started = options.spv ? Promise.resolve() : spv.start()
   const timeout = options.timeout || 5000
+
+  // Set once by the first lookup; every later lookup shares the same promise,
+  // so concurrent first calls start one node, not several.
+  let spv = null
+  let ready = null
+  function load () {
+    if (!ready) {
+      ready = (async () => {
+        const { SPVNode } = await import(toUrl('spv.js'))
+        const { query, TYPES } = await import(toUrl('dns-query.js'))
+        const { validateChain } = await import(toUrl('dnssec.js'))
+        spv = options.spv || new SPVNode(options.spvOptions || {})
+        if (!options.spv) await spv.start()
+        return { query, TYPES, validateChain }
+      })()
+    }
+    return ready
+  }
   // A caller may point the authoritative hop at a fixed nameserver (tests /
   // a known resolver); production discovers it from the chain's NS records.
   const authoritative = options.authoritative || null
@@ -79,7 +93,7 @@ export async function createHnsBackend (options = {}) {
     return null
   }
 
-  async function treeState () {
+  async function readTreeState () {
     try {
       const info = await spv.info()
       if (info && (info.bestblockhash || typeof info.blocks === 'number')) {
@@ -97,12 +111,12 @@ export async function createHnsBackend (options = {}) {
      *   tld:string, reason?:string}>}
      */
     async verify (name) {
-      await started
+      const { query, TYPES, validateChain } = await load()
       const host = String(name || '').toLowerCase().replace(/\.$/, '')
       const labels = host.split('.')
       const tld = labels[labels.length - 1]
       const synced = await spv.isSynced().catch(() => false)
-      const tstate = await treeState()
+      const tstate = await readTreeState()
 
       const resource = await spv.getResource(tld).catch(() => null)
       if (!resource || !Array.isArray(resource.records) || !resource.records.length) {
@@ -214,10 +228,16 @@ export async function createHnsBackend (options = {}) {
       }
     },
 
-    treeState,
+    async treeState () {
+      await load()
+      return readTreeState()
+    },
 
+    /** Stops the SPV node if a lookup started one; a caller's own node is left running. */
     async close () {
-      if (!options.spv) { try { await spv.stop() } catch {} }
+      if (!ready) return
+      await ready.catch(() => {})
+      if (spv && !options.spv) { try { await spv.stop() } catch {} }
     }
   }
 }

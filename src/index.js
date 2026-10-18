@@ -9,7 +9,8 @@
  * Batteries-included (CLI / service / a standalone app):
  *   import { createResolver } from 'hns-nostr'
  *   const r = await createResolver()   // wires the real SPV+DNSSEC backend
- *                                      // (wildroot-web3-resolution) + a WebSocket relay pool
+ *                                      // (wildroot-web3-resolution) + a WebSocket relay pool;
+ *                                      // the SPV node starts on the first Handshake lookup
  *   const proof = await r.resolve('_@hnsone.14898.hns.one')
  *   await r.close()
  *
