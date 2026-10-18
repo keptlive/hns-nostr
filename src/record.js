@@ -9,7 +9,7 @@
  * bare wss URL). A single logical record MAY be split across several TXT
  * strings by the authoritative server; we merge every string of `_nostr.<name>`.
  *
- * Managed-SLD (DESIGN §2 caveat, INF-4): a `receipt=` field references the
+ * Managed-SLD (DESIGN §2 caveat): a `receipt=` field references the
  * owner-signed assignment attestation. When present the name is treated as
  * managed and the resolver requires the reciprocal kind:0 (mutual binding) as
  * the only complete state — DNSSEC alone only proves HNS.ONE *published* the
@@ -98,9 +98,10 @@ export function parseNostrRecord (txtStrings) {
 }
 
 /**
- * Ownership-epoch validation (DESIGN §6 step 4, §9; LAW L4). The epoch must be
- * a non-negative integer. It keys the resolver cache and drives the historical
- * vs current distinction on transfer.
+ * Ownership-epoch validation (DESIGN §6 step 4, §9). The epoch must be a
+ * non-negative integer. It keys the resolver cache and drives the historical
+ * vs current distinction on transfer, so a previous owner's binding is never
+ * reported as the current one.
  * @param {string|number} epoch
  * @param {object} [opts]
  * @param {number} [opts.expected]  a known-current epoch (from a registry /

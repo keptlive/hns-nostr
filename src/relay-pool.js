@@ -2,7 +2,8 @@
  * Relay transport — fetches signed events from Nostr relays over the standard
  * NIP-01 websocket protocol (REQ / EVENT / EOSE). Every event returned is
  * signature-verified (nostr-event.js) before it leaves this module, so a
- * lying relay can withhold but never forge — the native half of LAW L3.
+ * lying relay can withhold but never forge — the Nostr half of the two-layer
+ * trust model (resolver.js).
  *
  * The transport is injectable: the default uses the global WebSocket (Node
  * >=20). Tests pass a mock exposing the same fetchEvents(filters, relays)

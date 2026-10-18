@@ -1,7 +1,7 @@
 /*
  * hns-nostr — public API.
  *
- * Embeddable (Wildroot / BR-7):
+ * Embeddable, with your own Handshake backend:
  *   import { NostrResolver } from 'hns-nostr'
  *   const r = new NostrResolver({ hns, relays, http })   // inject your core
  *   const proof = await r.resolve('alice.exist')

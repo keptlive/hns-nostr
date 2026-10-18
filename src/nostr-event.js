@@ -1,6 +1,6 @@
 /*
- * Nostr event integrity — the NATIVE layer of the two-layer trust model
- * (LAW L3). HNS/DNSSEC proves the readable mapping name -> pubkey; THIS proves
+ * Nostr event integrity — the NATIVE layer of the two-layer trust model.
+ * HNS/DNSSEC proves the readable mapping name -> pubkey; THIS proves
  * the canonical object: the event was really signed by that pubkey.
  *
  * An event id is sha256 of the canonical serialization

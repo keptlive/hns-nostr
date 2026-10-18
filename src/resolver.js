@@ -1,11 +1,12 @@
 /*
- * The HNS -> Nostr resolver (DESIGN §5, §6). This is the embeddable centerpiece
- * Wildroot calls (BR-7) and the CLI/service wraps (RES-1). It is DEPENDENCY-
+ * The HNS -> Nostr resolver (DESIGN §5, §6). This is the embeddable core; the
+ * CLI wraps it. It is DEPENDENCY-
  * INJECTED — an `hns` backend (real SPV chain proof via wildroot-web3-resolution, or a
  * mock), a `relays` pool, and a NIP-05 `http` fetch — so the same object runs
  * embedded in the browser, as a service, or under unit tests with fixtures.
  *
- * Two-layer trust (LAW L3), enforced end to end:
+ * Two-layer trust, enforced end to end. Neither layer alone is enough: a
+ * record proves who published the mapping, a signature proves the key agrees.
  *   HNS/DNSSEC  proves the readable mapping   name  -> pubkey  (proofs.hns/.dnssec)
  *   Nostr sig   proves the canonical object   pubkey -> name   (proofs.nostrAcknowledgement)
  *
@@ -98,7 +99,8 @@ export class NostrResolver {
       err.code = 'BAD_RECORD'
       throw err
     }
-    // Step 4 cont.: ownership-epoch validation (LAW L4).
+    // Step 4 cont.: ownership-epoch validation, so the binding of a name that
+    // has since changed hands is shown as historical, never as current.
     const expected = this.epochOracle ? await this.epochOracle(hnsName) : undefined
     const epochCheck = validateEpoch(rec.epoch, { expected })
     if (!epochCheck.ok && epochCheck.stale) {
@@ -283,7 +285,7 @@ export class NostrResolver {
     let treeState = null
     let binding = BINDING.NONE
     // The profile's hns claim is only honored if the HNS record actually binds
-    // this key (two-layer, LAW L3): pubkey -> name from the sig, name -> pubkey
+    // this key (the two-layer rule): pubkey -> name from the sig, name -> pubkey
     // from the chain. Both or neither.
     if (hnsClaim) {
       const b = await this._verifyHnsBinding(hnsClaim, pubkeyHex)

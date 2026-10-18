@@ -1,5 +1,5 @@
 /*
- * Resolver cache (DESIGN §9, LAW L4). Cache key =
+ * Resolver cache (DESIGN §9). Cache key =
  *   HNS name + ownership epoch + verified HNS tree state.
  *
  * The epoch and tree-state in the key are what make transfers safe: on an

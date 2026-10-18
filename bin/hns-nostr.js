@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * hns-nostr — CLI for the standalone HNS -> Nostr resolver (RES-1).
+ * hns-nostr — CLI for the standalone HNS -> Nostr resolver.
  *
  *   hns-nostr resolve alice.exist
  *   hns-nostr resolve _@hnsone.14898.hns.one --json
