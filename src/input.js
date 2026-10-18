@@ -1,16 +1,18 @@
 /*
- * Input classification — the six accepted identifier forms (DESIGN §5):
+ * Input classification — the accepted identifier forms (DESIGN §5):
  *   alice.exist            HNS-native
  *   _@alice.exist          root NIP-05 form, shown as alice.exist -> HNS-native
  *   alice@hns.one          conventional NIP-05 (ICANN domain we own)
+ *   _@alice.w3.hns.one     NIP-05 at a host under a configured NIP-05 domain
  *   npub1...               cryptographic id
  *   nprofile1...           portable profile (with relay hints)
  *   nostr:npub1... / nostr:nprofile1...   URI-wrapped
  *
- * The classifier NEVER guesses a namespace it wasn't given (LAW L2): an `@`
- * input over a Handshake name is an HNS-native identity, an `@` input over a
- * configured ICANN NIP-05 domain is the NIP-05 path — the two never silently
- * cross over.
+ * The classifier never guesses a namespace it wasn't given: an `@` input over
+ * a configured ICANN NIP-05 domain (or a host under one) takes the NIP-05
+ * path, and any other `@` input is read as a Handshake name. Which namespace
+ * an input belongs to decides which proof can back it, so the two never
+ * silently cross over.
  */
 
 import { decodeNpub, decodeNprofile } from './nip19.js'
@@ -22,8 +24,9 @@ const NPROFILE_RE = /^nprofile1[0-9a-z]+$/i
  * @param {string} raw
  * @param {object} opts
  * @param {string[]} opts.nip05Domains  domains resolved via the ICANN NIP-05
- *   path (default ['hns.one']). An `@`-input whose domain is one of these is a
- *   NIP-05 identity; any other `@`-domain is treated as a Handshake name.
+ *   path (default ['hns.one']). An `@`-input whose domain is one of these, or a
+ *   host under one, is a NIP-05 identity; any other `@`-domain is treated as a
+ *   Handshake name.
  * @returns {{form:'npub'|'nprofile'|'hns'|'nip05', ...}}
  */
 export function classifyInput (raw, { nip05Domains = ['hns.one'] } = {}) {
@@ -48,16 +51,17 @@ export function classifyInput (raw, { nip05Domains = ['hns.one'] } = {}) {
     const domain = s.slice(at + 1).toLowerCase().replace(/\.$/, '')
     if (!domain) throw new Error(`no domain in ${raw}`)
 
-    // `_@name` is the NIP-05 root form: display and resolve as the bare HNS
-    // name `name` (DESIGN §1).
-    if (local === '_') {
-      return { form: 'hns', hnsName: domain, displayName: domain, rootForm: true, input: raw }
+    // A configured NIP-05 domain covers the hosts under it: hns.one serves
+    // each name's NIP-05 document at that name's own host, as
+    // `_@<name>.hns.one`, so that host is an ICANN domain like any other.
+    if (isNip05Domain(domain, nip05Domains)) {
+      return { form: 'nip05', local: local.toLowerCase(), domain, input: raw }
     }
 
-    const isIcannNip05 = nip05Domains.some(
-      (d) => domain === d.toLowerCase())
-    if (isIcannNip05) {
-      return { form: 'nip05', local: local.toLowerCase(), domain, input: raw }
+    // `_@name` over a Handshake name is the NIP-05 root form: display and
+    // resolve as the bare HNS name `name` (DESIGN §1).
+    if (local === '_') {
+      return { form: 'hns', hnsName: domain, displayName: domain, rootForm: true, input: raw }
     }
 
     // An `@` over a Handshake name (not a configured NIP-05 domain): resolve
@@ -77,4 +81,12 @@ export function classifyInput (raw, { nip05Domains = ['hns.one'] } = {}) {
     throw new Error(`unrecognized identifier: ${raw}`)
   }
   return { form: 'hns', hnsName: name, displayName: name, input: raw }
+}
+
+/** True when `domain` is one of `nip05Domains` or a host under one. */
+function isNip05Domain (domain, nip05Domains) {
+  return nip05Domains.some((d) => {
+    const base = String(d).toLowerCase().replace(/\.$/, '')
+    return base && (domain === base || domain.endsWith('.' + base))
+  })
 }

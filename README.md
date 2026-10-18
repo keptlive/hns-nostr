@@ -73,11 +73,19 @@ the ownership `epoch`, `proofs` (`hns`, `dnssec`, `nostrAcknowledgement`,
 
 ## NIP-05 addresses on hns.one
 
-hns.one serves NIP-05 only as `_@<name>.hns.one`. The resolver reads a `_@`
-input as the root form of a Handshake name, so it does not resolve those
-addresses directly. Resolve the key instead; the profile's `nip05` claim is
-then checked. A `<local>@<domain>` address goes through NIP-05 when its domain
-is passed with `--nip05-domain` (or `nip05Domains`).
+hns.one serves NIP-05 at each name's own host, with the local part `_`, so
+the address for `hnsone.14898` is `_@hnsone.14898.hns.one`. An address goes through
+NIP-05 when its domain is a configured NIP-05 domain or a host under one, and
+the default is `hns.one`:
+
+```sh
+node bin/hns-nostr.js resolve _@hnsone.14898.hns.one
+```
+
+The result is a `nip05-compatible` binding, with the key's signed profile
+confirming the address. Any other `_@` input is the root form of a Handshake
+name: `_@alice.exist` resolves as `alice.exist`. `--nip05-domain` (or
+`nip05Domains`) replaces the default list.
 
 ## Not implemented
 

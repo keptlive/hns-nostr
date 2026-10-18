@@ -83,6 +83,29 @@ test('npub / nprofile / nostr: forms all resolve to the same identity', async ()
   }
 })
 
+test('_@<name>.hns.one resolves over NIP-05 at that host, with no Handshake lookup', async () => {
+  const site = makeKeypair()
+  const hnsCalls = []
+  const hns = { async verify (name) { hnsCalls.push(name); throw new Error('no Handshake lookup expected') } }
+  const resolver = new NostrResolver({
+    hns,
+    relays: mockRelays([profileEvent(site, { name: 'Site', nip05: '_@site.w3.hns.one' })]),
+    http: mockNip05Http({
+      '_@site.w3.hns.one': { names: { _: site.pubkey }, relays: { [site.pubkey]: ['wss://site.w3.hns.one'] } }
+    })
+  })
+  const p = await resolver.resolve('_@site.w3.hns.one')
+  assert.equal(p.resolutionPath, 'nip05')
+  assert.equal(p.pubkeyHex, site.pubkey)
+  assert.equal(p.nip05, '_@site.w3.hns.one')
+  assert.equal(p.proofs.nip05, true)
+  assert.equal(p.proofs.nostrAcknowledgement, true)
+  assert.equal(p.proofs.hns, false)
+  assert.equal(p.binding, BINDING.NIP05)
+  assert.ok(p.relays.includes('wss://site.w3.hns.one'))
+  assert.deepEqual(hnsCalls, [])
+})
+
 // ---- INVARIANT (1): NIP-05 failure must NOT invalidate an HNS binding -------
 
 test('INVARIANT 1: with NIP-05 down, a valid HNS binding still resolves', async () => {

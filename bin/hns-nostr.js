@@ -3,7 +3,7 @@
  * hns-nostr — CLI for the standalone HNS -> Nostr resolver (RES-1).
  *
  *   hns-nostr resolve alice.exist
- *   hns-nostr resolve alice@hns.one --json
+ *   hns-nostr resolve _@hnsone.14898.hns.one --json
  *   hns-nostr resolve npub1... --relay wss://social.hns.one
  *   hns-nostr encode <64-hex>                 # -> npub / nprofile
  *   hns-nostr classify <input>                # show how an input is parsed

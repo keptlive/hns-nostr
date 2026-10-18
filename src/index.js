@@ -10,7 +10,7 @@
  *   import { createResolver } from 'hns-nostr'
  *   const r = await createResolver()   // wires the real SPV+DNSSEC backend
  *                                      // (wildroot-web3-resolution) + a WebSocket relay pool
- *   const proof = await r.resolve('alice@hns.one')
+ *   const proof = await r.resolve('_@hnsone.14898.hns.one')
  *   await r.close()
  *
  * The proof object shape is DESIGN §5:
