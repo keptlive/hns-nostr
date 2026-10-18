@@ -1,6 +1,7 @@
 /*
- * The default HNS backend — REUSES Wildroot's mature Handshake core
- * (browser/src/hns: spv.js, dns-query.js, dnssec.js) so this resolver does
+ * The default HNS backend — REUSES Wildroot's Handshake modules (spv.js,
+ * dns-query.js, dnssec.js from wildroot-web3-resolution's src/, checked out
+ * beside this repository) so this resolver does
  * REAL local SPV chain-proof verification and DNSSEC validation, never a
  * trusted remote lookup. This is the concrete implementation of the
  * `hns` dependency the core NostrResolver injects; tests substitute a mock
@@ -12,9 +13,9 @@
  *   3. read _nostr.<name> TXT at the zone's authoritative nameserver
  *   4. DNSSEC-validate that TXT up to the on-chain DS anchor
  *
- * The browser core is imported dynamically so merely importing hns-nostr (or
+ * Those modules are imported dynamically so merely importing hns-nostr (or
  * embedding it with a caller-supplied backend / mock) never requires hsd or
- * the browser's native deps to be installed.
+ * wildroot-web3-resolution to be present.
  */
 
 import dns from 'node:dns/promises'
@@ -22,11 +23,13 @@ import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 
-const DEFAULT_BROWSER_HNS = path.resolve(
-  fileURLToPath(new URL('.', import.meta.url)), '..', '..', 'browser', 'src', 'hns')
+// ../wildroot-web3-resolution/src, relative to this repository's root.
+const DEFAULT_HNS_SRC = path.resolve(
+  fileURLToPath(new URL('.', import.meta.url)), '..', '..', 'wildroot-web3-resolution', 'src')
 
 function isPublicAddress (addr) {
-  // Minimal SSRF guard mirroring browser/src/hns/safe-address.js intent: refuse
+  // Minimal SSRF guard mirroring the intent of wildroot-web3-resolution's
+  // src/safe-address.js: refuse
   // loopback / private / link-local so a hostile zone cannot aim us at an
   // internal service. IPv4 only (the ns glue path is v4).
   if (typeof addr !== 'string') return false
@@ -42,7 +45,9 @@ function isPublicAddress (addr) {
 }
 
 export async function createHnsBackend (options = {}) {
-  const hnsDir = options.browserHnsPath || DEFAULT_BROWSER_HNS
+  // `browserHnsPath` is the older name for `hnsSrcPath`; both point at a
+  // directory holding spv.js, dns-query.js and dnssec.js.
+  const hnsDir = options.hnsSrcPath || options.browserHnsPath || DEFAULT_HNS_SRC
   const toUrl = (f) => new URL('file://' + path.join(hnsDir, f)).href
   const { SPVNode } = await import(toUrl('spv.js'))
   const { query, TYPES } = await import(toUrl('dns-query.js'))
@@ -217,4 +222,4 @@ export async function createHnsBackend (options = {}) {
   }
 }
 
-export { DEFAULT_BROWSER_HNS }
+export { DEFAULT_HNS_SRC }

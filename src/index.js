@@ -9,7 +9,7 @@
  * Batteries-included (CLI / service / a standalone app):
  *   import { createResolver } from 'hns-nostr'
  *   const r = await createResolver()   // wires the real SPV+DNSSEC backend
- *                                      // (browser/src/hns) + a WebSocket relay pool
+ *                                      // (wildroot-web3-resolution) + a WebSocket relay pool
  *   const proof = await r.resolve('alice@hns.one')
  *   await r.close()
  *
@@ -30,11 +30,13 @@ import { encodeNpub, decodeNpub, encodeNprofile, decodeNprofile } from './nip19.
 
 /**
  * Batteries-included resolver: the real SPV chain-proof + DNSSEC HNS backend
- * (reusing Wildroot's browser/src/hns core) and a WebSocket relay pool.
+ * (reusing wildroot-web3-resolution's modules) and a WebSocket relay pool.
  * @param {object} options
  * @param {object} [options.hns]           override the HNS backend
  * @param {object} [options.spvOptions]    passed to the browser SPVNode
- * @param {string} [options.browserHnsPath] path to browser/src/hns
+ * @param {string} [options.hnsSrcPath]    directory holding spv.js, dns-query.js
+ *                                         and dnssec.js (default:
+ *                                         ../wildroot-web3-resolution/src)
  * @param {object} [options.relays]        override the relay pool
  * @param {string[]} [options.defaultRelays]
  * @param {string[]} [options.nip05Domains]
@@ -43,6 +45,7 @@ import { encodeNpub, decodeNpub, encodeNprofile, decodeNprofile } from './nip19.
 export async function createResolver (options = {}) {
   const hns = options.hns || await createHnsBackend({
     spvOptions: options.spvOptions,
+    hnsSrcPath: options.hnsSrcPath,
     browserHnsPath: options.browserHnsPath,
     timeout: options.hnsTimeout,
     authoritative: options.authoritative

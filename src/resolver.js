@@ -1,7 +1,7 @@
 /*
  * The HNS -> Nostr resolver (DESIGN §5, §6). This is the embeddable centerpiece
  * Wildroot calls (BR-7) and the CLI/service wraps (RES-1). It is DEPENDENCY-
- * INJECTED — an `hns` backend (real SPV chain proof via browser/src/hns, or a
+ * INJECTED — an `hns` backend (real SPV chain proof via wildroot-web3-resolution, or a
  * mock), a `relays` pool, and a NIP-05 `http` fetch — so the same object runs
  * embedded in the browser, as a service, or under unit tests with fixtures.
  *

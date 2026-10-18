@@ -9,7 +9,7 @@
  *   hns-nostr classify <input>                # show how an input is parsed
  *
  * `resolve` stands up the REAL SPV chain-proof + DNSSEC backend (reusing
- * Wildroot's browser/src/hns core) and a WebSocket relay pool. `encode` /
+ * wildroot-web3-resolution's modules) and a WebSocket relay pool. `encode` /
  * `classify` are offline and need no node.
  */
 
